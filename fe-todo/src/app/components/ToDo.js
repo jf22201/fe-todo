@@ -4,7 +4,7 @@ import supabase from '../../../utils/supabase/supabaseClient';
 
 
 
-const ToDo = ({data,setData}) => {
+const ToDo = ({data,setData,currToDoListId}) => {
     const [taskInputName,setTaskInputName] = useState('');
     const [sortedData,setSortedData] = useState([]);
     const updateTaskDB = async (task) => {
@@ -12,6 +12,14 @@ const ToDo = ({data,setData}) => {
     }
     const createTaskDB = async (task) => { await supabase.from('tasks').insert([task]);
     }
+
+    const deleteTaskDB = async (task) =>{
+        //delete the selected task
+        await supabase.from('tasks').delete().eq('id',task.id);
+        //update the position of tasks with position greater than current
+        await supabase.from('tasks').update({"position": supabase.sql`position - 1`}).gt('position',task.position).eq('todolist',task.todolist)
+    }
+        
     useEffect(()=>{
         let temp = data
         temp.sort((a,b)=>a.position-b.position);
@@ -71,11 +79,16 @@ const ToDo = ({data,setData}) => {
     setData(newData);
     }
     const handleDelete = (item) => {
-        console.log('delete',item);
+    //perform operations on DB first
+    deleteTaskDB(item)
     setData({...data, list:data?.list?.filter((i) => i.id !== item.id)});//select all except the one to delete
+
     }
-    const taskAdd = () => {
-        let newTask = {task:taskInputName,id:data.currID,completed:false};
+    const taskAdd = async () => {
+        taskTemplate = {task:taskInputName,completed:false,todolist:currToDoListId}
+        await createTaskDB(taskTemplate).then()
+        let newTask = {task:taskInputName,id:,completed:false};
+
         setData({...data,list:[...data.list,newTask],currID:data.currID+1}); //add new task to list and increment currID
         setTaskInputName(''); //clear input field
     }

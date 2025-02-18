@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import ToDo from "./components/ToDo";
 import { withCoalescedInvoke } from "next/dist/lib/coalesced-function";
 import supabase from "../../utils/supabase/supabaseClient";
+import todolists from "./test/page";
 
 export default function Page() {
   //react states
@@ -12,6 +13,7 @@ export default function Page() {
   const [data, setData] = useState([]);
   const [newListName, setNewListName] = useState("");
   const [toDoLists, setToDoLists] = useState([]);
+  const [currToDoListId,setCurrTodoListId] = useState(0);
   const getToDoLists = async () => await supabase.from("todolists").select("*");
   const getTasks = async (listid) =>
     await supabase.from("tasks").select("*").eq("todolist", listid);
@@ -42,6 +44,8 @@ export default function Page() {
   //   }
   // }, [allData, createdNewList]);
 
+
+  //load the 
   useEffect(() => {
     getToDoLists().then((res) => {
       let response = res;
@@ -49,23 +53,26 @@ export default function Page() {
     });
   }, []);
 
-  useEffect(() => {
-    console.log("todolists", toDoLists);
-  }, [toDoLists]);
-  useEffect(() => {
-    console.log("data", data);
-  }, [data]);
+  // useEffect(() => {
+  //   console.log("todolists", toDoLists);
+  // }, [toDoLists]);
+  // useEffect(() => {
+  //   console.log("data", data);
+  // }, [data]);
 
+
+  //Update the tasks loaded depedning on the selected todolist
   useEffect(() => {
     let listid = toDoLists[selectedListIndex]?.id;
     if (listid !== undefined && listid !== null) {
       setData(getTasks(listid).data);
     }
+    setCurrTodoListId(listid)//update listid state
   }, [selectedListIndex]);
 
-  useEffect(() => {
-    console.log(allData);
-  }, [allData]);
+  // useEffect(() => {
+  //   console.log(allData);
+  // }, [allData]);
 
   useEffect(() => {
     let listid = toDoLists[selectedListIndex]?.id;
@@ -108,7 +115,7 @@ export default function Page() {
         </button>
       </div>
       <h1>{data?.name}</h1>
-      <ToDo data={data} setData={setData} />
+      <ToDo data={data} setData={setData} currToDoListId={currToDoListId}/>
       {/* <button onClick={()=>{updateDropDownSelection(1)}}>test</button> */}
     </div>
   );
