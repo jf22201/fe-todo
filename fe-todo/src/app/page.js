@@ -13,10 +13,32 @@ export default function Page() {
   const [data, setData] = useState([]);
   const [newListName, setNewListName] = useState("");
   const [toDoLists, setToDoLists] = useState([]);
-  const [currToDoListId,setCurrTodoListId] = useState(0);
+  const [currToDoListId, setCurrTodoListId] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  //DB functions
   const getToDoLists = async () => await supabase.from("todolists").select("*");
-  const getTasks = async (listid) =>
-    await supabase.from("tasks").select("*").eq("todolist", listid);
+  const getTasks = async (listid) => {
+    const { data, error } = await supabase
+      .from("tasks")
+      .select("*")
+      .eq("todolist", listid);
+    if (error) {
+      console.log(error);
+    }
+    return data;
+  };
+
+  const createListDB = async (list) => {
+    const { data, error } = await supabase
+      .from("todolists")
+      .insert({ list_name: list.list_name })
+      .select("*"); //select statement to return the inserted row;
+    if (error) {
+      console.log(error);
+    }
+    return data;
+  };
 
   const handleListChange = (e) => {
     setSelectedListIndex(e.target.value);
@@ -24,61 +46,68 @@ export default function Page() {
   };
   const handleCreateNewList = () => {
     console.log("create new list");
-    // let newAllData = structuredClone(allData);
-    // newAllData.push({ list: [], currID: 1, name: newListName });
-    // setAllData(newAllData);
-    setAllData((prevData) => {
-      let update = [{ list: [], currID: 1, name: newListName }, ...prevData];
+    let listTemplate = { list_name: newListName };
+    createListDB(listTemplate).then((result) => {
+      let newList = { ...listTemplate, id: result[0].id };
+      setToDoLists([newList, ...toDoLists]);
       setNewListName("");
       setSelectedListIndex(0);
-      return update;
+      setCurrTodoListId(result[0].id); //update listid state
+      getTasks(result[0].id).then((res) => {
+        //update the tasks list
+        setData(res);
+      });
     });
-
-    // setCreatedNewList(true);
   };
-  // useEffect(() => {
-  //   console.log("allData", allData);
-  //   if (createdNewList) {
-  //     setCreatedNewList(false);
-  //     setSelectedListIndex(allData.length - 1);
-  //   }
-  // }, [allData, createdNewList]);
 
-
-  //load the 
-  useEffect(() => {
-    getToDoLists().then((res) => {
+  const handleDeleteList = async () => {
+    let listid = toDoLists[selectedListIndex]?.id;
+    await supabase.from("todolists").delete().eq("id", listid);
+    //casading delete of tasks in DB schema handles the deletion of tasks
+    //update the FE todolists
+    await getToDoLists().then((res) => {
       let response = res;
       setToDoLists(response.data);
+      setSelectedListIndex(0); //set the selected list to the first list
+      setCurrTodoListId(response.data[0]?.id); //update listid state
+    });
+  };
+
+  //initial state setup
+  useEffect(() => {
+    getToDoLists().then(async (res) => {
+      let response = res;
+      setToDoLists(response.data);
+      const taskData = await getTasks(response.data[0].id);
+      setData(taskData);
+      setLoading(false);
+      setSelectedListIndex(0); //set the selected list to the first list
+      setCurrTodoListId(response.data[0].id); //update list id state
     });
   }, []);
 
-  // useEffect(() => {
-  //   console.log("todolists", toDoLists);
-  // }, [toDoLists]);
-  // useEffect(() => {
-  //   console.log("data", data);
-  // }, [data]);
-
-
-  //Update the tasks loaded depedning on the selected todolist
+  //Update the current listid if the selectedListIndex changes
   useEffect(() => {
-    let listid = toDoLists[selectedListIndex]?.id;
-    if (listid !== undefined && listid !== null) {
-      setData(getTasks(listid).data);
+    if (toDoLists.length > 0) {
+      let listid = toDoLists[selectedListIndex]?.id;
+      setCurrTodoListId(listid);
     }
-    setCurrTodoListId(listid)//update listid state
   }, [selectedListIndex]);
 
-  // useEffect(() => {
-  //   console.log(allData);
-  // }, [allData]);
-
+  //update the loaded tasks whenever currToDoListId changes
   useEffect(() => {
-    let listid = toDoLists[selectedListIndex]?.id;
-    console.log("listid", listid);
-    if (listid !== undefined && listid !== null) {
-      getTasks(listid).then((res) => {
+    console.log("currToDoListId", currToDoListId);
+    const updateTasks = async (listid) => {
+      const taskData = await getTasks(listid);
+      setData(taskData);
+    };
+    updateTasks(currToDoListId);
+  }, [currToDoListId]);
+
+  //
+  useEffect(() => {
+    if (currToDoListId !== undefined && currToDoListId !== null) {
+      getTasks(currToDoListId).then((res) => {
         let response = res;
         setData(response.data);
       });
@@ -107,15 +136,26 @@ export default function Page() {
           placeholder="Enter New List Name"
         />
         <button
+          className="px-2"
           onClick={() => {
             handleCreateNewList();
           }}
         >
           Create New List
         </button>
+
+        <button className="px-2" onClick={handleDeleteList}>
+          {" "}
+          Delete Task
+        </button>
       </div>
-      <h1>{data?.name}</h1>
-      <ToDo data={data} setData={setData} currToDoListId={currToDoListId}/>
+      {/* <h1>{data?.name}</h1> */}
+      {loading ? (
+        <div>Loading...</div>
+      ) : (
+        <ToDo data={data} setData={setData} currToDoListId={currToDoListId} />
+      )}
+
       {/* <button onClick={()=>{updateDropDownSelection(1)}}>test</button> */}
     </div>
   );
