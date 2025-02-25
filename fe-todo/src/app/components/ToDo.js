@@ -1,6 +1,7 @@
 import { M_PLUS_1 } from "next/font/google";
 import React, { useState, useEffect } from "react";
 import supabase from "../../../utils/supabase/supabaseClient";
+import { getTargetTriple } from "next/dist/build/swc/generated-native";
 
 const ToDo = ({ data, setData, currToDoListId }) => {
   const [taskInputName, setTaskInputName] = useState("");
@@ -157,8 +158,8 @@ const ToDo = ({ data, setData, currToDoListId }) => {
     );
   }
   return (
-    <div>
-      <div className="flex flex-col">
+    <div className="">
+      <div className="flex flex-col space=2">
         {sortedData?.map((item, index) => {
           return (
             <div key={item.id} className="flex flex-row space-x-2">
@@ -188,14 +189,15 @@ export default ToDo;
 
 const AddTaskComponent = ({ taskInputName, taskAdd, setTaskInputName }) => {
   return (
-    <div className="flex flex-row space-x-2">
+    <div className="flex flex-row space-x-2 py-4">
       <input
+        className="bg-white p-4 rounded-2xl shadow-lg"
         type="text"
         value={taskInputName}
         onChange={(e) => setTaskInputName(e.target.value)}
         placeholder="Enter Task"
       />
-      <button onClick={taskAdd}>Add Task</button>
+      <button className='bg-sky-100 p-4 rounded-2xl shadow-lg'onClick={taskAdd}>Add Task</button>
     </div>
   );
 };

@@ -114,9 +114,11 @@ export default function Page() {
     }
   }, [toDoLists]);
   return (
-    <div>
-      <div className="flex flex-row space-x-2">
+    <>
+    <div className='flex flex-col items-center h-screen bg-sky-100'>
+      <div className="flex flex-row space-x-2 ">
         <select
+        className="space-x-4 p-4 rounded-2xl shadow-lg"
           id="dropdown"
           value={selectedListIndex}
           onChange={(e) => {
@@ -124,7 +126,7 @@ export default function Page() {
           }}
         >
           {toDoLists?.map((item, index) => (
-            <option value={index} key={`list${index}`}>
+            <option value={index} key={`list${index}`} className='bg-white'>
               {item.list_name}
             </option>
           ))}
@@ -134,9 +136,10 @@ export default function Page() {
           value={newListName}
           onChange={(e) => setNewListName(e.target.value)}
           placeholder="Enter New List Name"
+          className=" p-4 rounded-2xl shadow-lg"
         />
         <button
-          className="px-2"
+          className="px-2 rounded-2xl shadow-lg bg-sky-600"
           onClick={() => {
             handleCreateNewList();
           }}
@@ -144,19 +147,22 @@ export default function Page() {
           Create New List
         </button>
 
-        <button className="px-2" onClick={handleDeleteList}>
+        <button className="px-2 rounded-2xl shadow-lg bg-sky-600" onClick={handleDeleteList}>
           {" "}
-          Delete Task
+          Delete List
         </button>
       </div>
       {/* <h1>{data?.name}</h1> */}
+      <div className="py-8">
       {loading ? (
         <div>Loading...</div>
       ) : (
         <ToDo data={data} setData={setData} currToDoListId={currToDoListId} />
       )}
+      </div>
 
       {/* <button onClick={()=>{updateDropDownSelection(1)}}>test</button> */}
     </div>
+    </>
   );
 }
