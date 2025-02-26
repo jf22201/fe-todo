@@ -15,6 +15,8 @@ export default function Page() {
   const [toDoLists, setToDoLists] = useState([]);
   const [currToDoListId, setCurrTodoListId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [meetingComment, setMeetingComment] = useState("");
+  const [meetingTime, setMeetingTime] = useState("");
 
   //DB functions
   const getToDoLists = async () => await supabase.from("todolists").select("*");
@@ -34,6 +36,7 @@ export default function Page() {
       .from("todolists")
       .insert({ list_name: list.list_name })
       .select("*"); //select statement to return the inserted row;
+    //create linked meeting comment
     if (error) {
       console.log(error);
     }
@@ -70,6 +73,8 @@ export default function Page() {
       setToDoLists(response.data);
       setSelectedListIndex(0); //set the selected list to the first list
       setCurrTodoListId(response.data[0]?.id); //update listid state
+      setMeetingComment(response.data[0]?.comment);
+      setMeetingTime(response.data[0]?.time);
     });
   };
 
@@ -83,6 +88,8 @@ export default function Page() {
       setLoading(false);
       setSelectedListIndex(0); //set the selected list to the first list
       setCurrTodoListId(response.data[0].id); //update list id state
+      setMeetingComment(response.data[0].comment);
+      setMeetingTime(response.data[0].time);
     });
   }, []);
 
@@ -102,6 +109,8 @@ export default function Page() {
       setData(taskData);
     };
     updateTasks(currToDoListId);
+    setMeetingComment(toDoLists[selectedListIndex]?.comment);
+    setMeetingTime(toDoLists[selectedListIndex]?.time);
   }, [currToDoListId]);
 
   //
@@ -115,54 +124,65 @@ export default function Page() {
   }, [toDoLists]);
   return (
     <>
-    <div className='flex flex-col items-center h-screen bg-sky-100'>
-      <div className="flex flex-row space-x-2 ">
-        <select
-        className="space-x-4 p-4 rounded-2xl shadow-lg"
-          id="dropdown"
-          value={selectedListIndex}
-          onChange={(e) => {
-            handleListChange(e);
-          }}
-        >
-          {toDoLists?.map((item, index) => (
-            <option value={index} key={`list${index}`} className='bg-white'>
-              {item.list_name}
-            </option>
-          ))}
-        </select>
-        <input
-          type="text"
-          value={newListName}
-          onChange={(e) => setNewListName(e.target.value)}
-          placeholder="Enter New List Name"
-          className=" p-4 rounded-2xl shadow-lg"
-        />
-        <button
-          className="px-2 rounded-2xl shadow-lg bg-sky-600"
-          onClick={() => {
-            handleCreateNewList();
-          }}
-        >
-          Create New List
-        </button>
+      <div className="flex flex-col items-center h-screen bg-sky-100">
+        <div className="flex flex-row space-x-2 ">
+          <select
+            className="space-x-4 p-4 rounded-2xl shadow-lg"
+            id="dropdown"
+            value={selectedListIndex}
+            onChange={(e) => {
+              handleListChange(e);
+            }}
+          >
+            {toDoLists?.map((item, index) => (
+              <option value={index} key={`list${index}`} className="bg-white">
+                {item.list_name}
+              </option>
+            ))}
+          </select>
+          <input
+            type="text"
+            value={newListName}
+            onChange={(e) => setNewListName(e.target.value)}
+            placeholder="Enter New List Name"
+            className=" p-4 rounded-2xl shadow-lg"
+          />
+          <button
+            className="px-2 rounded-2xl shadow-lg bg-sky-600"
+            onClick={() => {
+              handleCreateNewList();
+            }}
+          >
+            Create New List
+          </button>
 
-        <button className="px-2 rounded-2xl shadow-lg bg-sky-600" onClick={handleDeleteList}>
-          {" "}
-          Delete List
-        </button>
-      </div>
-      {/* <h1>{data?.name}</h1> */}
-      <div className="py-8">
-      {loading ? (
-        <div>Loading...</div>
-      ) : (
-        <ToDo data={data} setData={setData} currToDoListId={currToDoListId} />
-      )}
-      </div>
+          <button
+            className="px-2 rounded-2xl shadow-lg bg-sky-600"
+            onClick={handleDeleteList}
+          >
+            {" "}
+            Delete List
+          </button>
+        </div>
+        {/* <h1>{data?.name}</h1> */}
+        <div className="py-8">
+          {loading ? (
+            <div>Loading...</div>
+          ) : (
+            <ToDo
+              data={data}
+              setData={setData}
+              currToDoListId={currToDoListId}
+              meetingComment={meetingComment}
+              setMeetingComment={setMeetingComment}
+              meetingTime={meetingTime}
+              setMeetingTime={setMeetingTime}
+            />
+          )}
+        </div>
 
-      {/* <button onClick={()=>{updateDropDownSelection(1)}}>test</button> */}
-    </div>
+        {/* <button onClick={()=>{updateDropDownSelection(1)}}>test</button> */}
+      </div>
     </>
   );
 }

@@ -1,9 +1,16 @@
 import { M_PLUS_1 } from "next/font/google";
 import React, { useState, useEffect } from "react";
 import supabase from "../../../utils/supabase/supabaseClient";
-import { getTargetTriple } from "next/dist/build/swc/generated-native";
 
-const ToDo = ({ data, setData, currToDoListId }) => {
+const ToDo = ({
+  data,
+  setData,
+  currToDoListId,
+  meetingComment,
+  meetingTime,
+  setMeetingComment,
+  setMeetingTime,
+}) => {
   const [taskInputName, setTaskInputName] = useState("");
   const [sortedData, setSortedData] = useState([]);
   const updateTaskDB = async (task) => {
@@ -181,6 +188,16 @@ const ToDo = ({ data, setData, currToDoListId }) => {
         taskAdd={taskAdd}
         setTaskInputName={setTaskInputName}
       />
+      <CommentAndSummaryNotes
+        currToDoListId={currToDoListId}
+        meetingComment={meetingComment}
+        setMeetingComment={setMeetingComment}
+      />
+      <MeetingTime
+        currToDoListId={currToDoListId}
+        meetingTime={meetingTime}
+        setMeetingTime={setMeetingTime}
+      />
     </div>
   );
 };
@@ -197,7 +214,82 @@ const AddTaskComponent = ({ taskInputName, taskAdd, setTaskInputName }) => {
         onChange={(e) => setTaskInputName(e.target.value)}
         placeholder="Enter Task"
       />
-      <button className='bg-sky-100 p-4 rounded-2xl shadow-lg'onClick={taskAdd}>Add Task</button>
+      <button
+        className="bg-sky-100 p-4 rounded-2xl shadow-lg"
+        onClick={taskAdd}
+      >
+        Add Task
+      </button>
     </div>
+  );
+};
+
+const CommentAndSummaryNotes = ({
+  currToDoListId,
+  meetingComment,
+  setMeetingComment,
+}) => {
+  const handleCommentChange = (e) => {
+    setMeetingComment(e.target.value);
+  };
+  const handleCommentSubmit = async (e) => {
+    await supabase
+      .from("meeting_comment")
+      .update({ comment: meetingComment })
+      .eq("todolist", currToDoListId);
+  };
+
+  return (
+    <>
+      <div className="flex flex-col space-y-4 items-center">
+        <textarea
+          type="text"
+          id="input"
+          value={meetingComment}
+          onChange={handleCommentChange}
+          placeholder="Type meeting comment"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <button
+          className="py-2 shadow-lg rounded-lg w-1/2"
+          onClick={handleCommentSubmit}
+        >
+          Submit Comment
+        </button>
+      </div>
+    </>
+  );
+};
+
+const MeetingTime = ({ currToDoListId, meetingTime, setMeetingTime }) => {
+  const handleTimeChange = (e) => {
+    setMeetingTime(e.target.value);
+  };
+  const handleTimeSubmit = async (e) => {
+    await supabase
+      .from("todolists")
+      .update({ time: meetingTime })
+      .eq("todolist", currToDoListId);
+  };
+
+  return (
+    <>
+      <div className="flex flex-col space-y-4 items-center">
+        <textarea
+          type="text"
+          id="input"
+          value={meetingTime}
+          onChange={handleTimeChange}
+          placeholder="Input next meeting time here"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <button
+          className="py-2 shadow-lg rounded-lg w-1/2"
+          onClick={handleTimeSubmit}
+        >
+          Submit Time
+        </button>
+      </div>
+    </>
   );
 };
