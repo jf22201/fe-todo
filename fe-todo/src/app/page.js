@@ -43,12 +43,12 @@ export default function Page() {
     return data;
   };
 
-  const handleListChange = (e) => {
+  const handleListChange = async (e) => {
     setSelectedListIndex(e.target.value);
-    setData(allData[e.target.value]);
+    setData(toDoLists[e.target.value]);
   };
-  const handleCreateNewList = () => {
-    console.log("create new list");
+  const handleCreateNewList = async () => {
+    setLoading(true);
     let listTemplate = { list_name: newListName };
     createListDB(listTemplate).then((result) => {
       let newList = { ...listTemplate, id: result[0].id };
@@ -60,21 +60,26 @@ export default function Page() {
         //update the tasks list
         setData(res);
       });
+      setLoading(false);
     });
   };
 
   const handleDeleteList = async () => {
-    let listid = toDoLists[selectedListIndex]?.id;
+    let listid = currToDoListId;
+    setLoading(true);
     await supabase.from("todolists").delete().eq("id", listid);
     //casading delete of tasks in DB schema handles the deletion of tasks
     //update the FE todolists
     await getToDoLists().then((res) => {
-      let response = res;
-      setToDoLists(response.data);
+      //sort the todolists by id
+      let response_data = res.data;
+      response_data.sort((a, b) => a.id - b.id);
+      setToDoLists(response_data);
       setSelectedListIndex(0); //set the selected list to the first list
-      setCurrTodoListId(response.data[0]?.id); //update listid state
-      setMeetingComment(response.data[0]?.comment);
-      setMeetingTime(response.data[0]?.time);
+      setCurrTodoListId(response_data[0]?.id); //update listid state
+      setMeetingComment(response_data[0]?.comment);
+      setMeetingTime(response_data[0]?.time);
+      setLoading(false);
     });
   };
 
@@ -82,14 +87,18 @@ export default function Page() {
   useEffect(() => {
     getToDoLists().then(async (res) => {
       let response = res;
+      response.data.sort((a, b) => a.id - b.id);
       setToDoLists(response.data);
-      const taskData = await getTasks(response.data[0].id);
-      setData(taskData);
+      if (response.data.length > 0) {
+        // only set get task data if a todolist exists
+        const taskData = await getTasks(response.data[0].id);
+        setData(taskData);
+        setCurrTodoListId(response.data[0].id); //update list id state
+        setMeetingComment(response.data[0].comment);
+        setMeetingTime(response.data[0].time);
+      }
       setLoading(false);
       setSelectedListIndex(0); //set the selected list to the first list
-      setCurrTodoListId(response.data[0].id); //update list id state
-      setMeetingComment(response.data[0].comment);
-      setMeetingTime(response.data[0].time);
     });
   }, []);
 
@@ -168,7 +177,7 @@ export default function Page() {
         <div className="py-8">
           {loading ? (
             <div>Loading...</div>
-          ) : (
+          ) : toDoLists?.length > 0 ? (
             <ToDo
               data={data}
               setData={setData}
@@ -178,6 +187,8 @@ export default function Page() {
               meetingTime={meetingTime}
               setMeetingTime={setMeetingTime}
             />
+          ) : (
+            <div>Create a new list!</div>
           )}
         </div>
 

@@ -51,14 +51,16 @@ const ToDo = ({
   };
 
   useEffect(() => {
-    let temp = data;
-    temp.sort((a, b) => a.position - b.position);
-    setSortedData(temp);
+    if (data !== null) {
+      let temp = data;
+      temp.sort((a, b) => a.position - b.position);
+      setSortedData(temp);
+    }
   }, []);
   //effect to update listLength when data changes
   useEffect(() => {
     //update sortedData when data changes
-    if (data) {
+    if (Array.isArray(data) && data?.length > 0) {
       console.log("data", data);
       let temp = [...data];
       temp.sort((a, b) => a.position - b.position);
@@ -66,26 +68,29 @@ const ToDo = ({
     }
   }, [data]);
 
-  const decreasePosition = (index) => {
+  const decreasePosition = async (index) => {
     console.log("decposition data", data);
     let temp = structuredClone(data); //deepcopy
     [temp[index].position, temp[index - 1].position] = [
       temp[index - 1].position,
       temp[index].position,
     ]; //switch position values between tasks
+    await updateTaskDB(temp[index]);
+    await updateTaskDB(temp[index - 1]);
     temp.sort((a, b) => a.position - b.position); //re-sort based on position attribute
     setData(temp);
   };
 
-  const increasePosition = (index) => {
+  const increasePosition = async (index) => {
     console.log(data);
     let temp = structuredClone(data); //deepcopy
     [temp[index].position, temp[index + 1].position] = [
       temp[index + 1].position,
       temp[index].position,
     ]; //switch position values between tasks
-    updateTaskDB(temp[index]);
-    updateTaskDB(temp[index + 1]);
+    await updateTaskDB(temp[index]);
+    await updateTaskDB(temp[index + 1]);
+    temp.sort((a, b) => a.position - b.position); //re-sort based on position attribute
     setData(temp);
   };
 
@@ -107,26 +112,42 @@ const ToDo = ({
       </div>
     );
   };
-  const handleToggleCompleted = async (index, checked) => {
-    let task = data[index];
+  const handleToggleCompleted = async (taskid, checked) => {
+    let task = data.filter((task) => task.id === taskid)[0];
     await toggleCompletedDB(task)
       .then((_) => {
-        let newData = [...data];
-        newData[index].completed = checked;
+        let newData = data;
+        newData = newData.map((task) => {
+          if (task.id != taskid) {
+            return task;
+          } else {
+            let return_task = { ...task, completed: checked };
+            return return_task;
+          }
+        });
+        console.log(newData);
         setData(newData);
       })
       .catch((error) => {
         console.log(error);
       });
   };
-  const handleDelete = async (index) => {
-    const taskToDelete = data[index];
+  const handleDelete = async (taskid) => {
+    const taskToDelete = data.filter((task) => task.id === taskid)[0];
     //perform operations on DB first
     await deleteTaskDB(taskToDelete)
       .then((_) => {
         let filteredData = [
           ...data.filter((task) => task.id !== taskToDelete.id),
         ]; //select all except the task to delete
+        //update the positions
+        filteredData = filteredData.map((task) => {
+          if (task.position > taskToDelete.position) {
+            return { ...task, position: task.position - 1 };
+          } else {
+            return task;
+          }
+        });
         setData(filteredData);
       })
       .catch((error) => {
@@ -152,7 +173,7 @@ const ToDo = ({
         console.log(error);
       });
   };
-  if (data?.length === 0) {
+  if (Array.isArray(data) && data?.length === 0) {
     return (
       <div>
         <p>No tasks!</p>
@@ -163,43 +184,49 @@ const ToDo = ({
         />
       </div>
     );
-  }
-  return (
-    <div className="">
-      <div className="flex flex-col space=2">
-        {sortedData?.map((item, index) => {
-          return (
-            <div key={item.id} className="flex flex-row space-x-2">
-              <div>{item.task}</div>
-              {buttonRendering(item, index)}
-              {/* <button></button> */}
-              <input
-                type="checkbox"
-                checked={item.completed}
-                onChange={(e) => handleToggleCompleted(index, e.target.checked)}
-              />
-              <button onClick={() => handleDelete(index)}>Delete</button>
-            </div>
-          );
-        })}
+  } else {
+    return (
+      <div className="">
+        <div className="flex flex-col space=2">
+          {sortedData?.map((item, index) => {
+            return (
+              <div
+                key={item.id}
+                className="flex items-center justify-between p-3"
+              >
+                <span className="flex-1">{item.task}</span>
+                {buttonRendering(item, index)}
+                {/* <button></button> */}
+                <input
+                  type="checkbox"
+                  checked={item.completed}
+                  onChange={(e) =>
+                    handleToggleCompleted(item.id, e.target.checked)
+                  }
+                />
+                <button onClick={() => handleDelete(item.id)}>Delete</button>
+              </div>
+            );
+          })}
+        </div>
+        <AddTaskComponent
+          taskInputName={taskInputName}
+          taskAdd={taskAdd}
+          setTaskInputName={setTaskInputName}
+        />
+        <CommentAndSummaryNotes
+          currToDoListId={currToDoListId}
+          meetingComment={meetingComment}
+          setMeetingComment={setMeetingComment}
+        />
+        <MeetingTime
+          currToDoListId={currToDoListId}
+          meetingTime={meetingTime}
+          setMeetingTime={setMeetingTime}
+        />
       </div>
-      <AddTaskComponent
-        taskInputName={taskInputName}
-        taskAdd={taskAdd}
-        setTaskInputName={setTaskInputName}
-      />
-      <CommentAndSummaryNotes
-        currToDoListId={currToDoListId}
-        meetingComment={meetingComment}
-        setMeetingComment={setMeetingComment}
-      />
-      <MeetingTime
-        currToDoListId={currToDoListId}
-        meetingTime={meetingTime}
-        setMeetingTime={setMeetingTime}
-      />
-    </div>
-  );
+    );
+  }
 };
 
 export default ToDo;
@@ -229,14 +256,20 @@ const CommentAndSummaryNotes = ({
   meetingComment,
   setMeetingComment,
 }) => {
+  const [buttonText, setButtonText] = useState("Submit Comment");
   const handleCommentChange = (e) => {
     setMeetingComment(e.target.value);
   };
   const handleCommentSubmit = async (e) => {
+    setButtonText("Submitting");
     await supabase
-      .from("meeting_comment")
+      .from("todolists")
       .update({ comment: meetingComment })
-      .eq("todolist", currToDoListId);
+      .eq("id", currToDoListId);
+    setButtonText("Submitted ✅");
+    setTimeout(() => {
+      setButtonText("Submit Comment");
+    }, 1500);
   };
 
   return (
@@ -254,7 +287,7 @@ const CommentAndSummaryNotes = ({
           className="py-2 shadow-lg rounded-lg w-1/2"
           onClick={handleCommentSubmit}
         >
-          Submit Comment
+          {buttonText}
         </button>
       </div>
     </>
@@ -262,14 +295,20 @@ const CommentAndSummaryNotes = ({
 };
 
 const MeetingTime = ({ currToDoListId, meetingTime, setMeetingTime }) => {
+  const [buttonText, setButtonText] = useState("Submit Time");
   const handleTimeChange = (e) => {
     setMeetingTime(e.target.value);
   };
   const handleTimeSubmit = async (e) => {
+    setButtonText("Submitting...");
     await supabase
       .from("todolists")
       .update({ time: meetingTime })
-      .eq("todolist", currToDoListId);
+      .eq("id", currToDoListId);
+    setButtonText("Submitted ✅");
+    setTimeout(() => {
+      setButtonText("Submit Time");
+    }, 1500);
   };
 
   return (
@@ -287,7 +326,7 @@ const MeetingTime = ({ currToDoListId, meetingTime, setMeetingTime }) => {
           className="py-2 shadow-lg rounded-lg w-1/2"
           onClick={handleTimeSubmit}
         >
-          Submit Time
+          {buttonText}
         </button>
       </div>
     </>
