@@ -100,15 +100,15 @@ const ToDo = ({
       return null; //show no buttons if only one item in list
     }
     if (index === 0) {
-      return <button onClick={() => increasePosition(index)}>v</button>;
+      return <button className='w-4 h-4 bg-gray-100 hover:bg-gray-100/75' onClick={() => increasePosition(index)}>v</button>;
     }
     if (index === data?.length - 1) {
-      return <button onClick={() => decreasePosition(index)}>^</button>;
+      return <button className='w-4 h-4 bg-gray-100 hover:bg-gray-100/75' onClick={() => decreasePosition(index)}>^</button>;
     }
     return (
       <div className="space-x-2">
-        <button onClick={() => increasePosition(index)}>v</button>
-        <button onClick={() => decreasePosition(index)}>^</button>
+        <button className='w-4 h-4 bg-gray-100 hover:bg-gray-100/75 rounded-full' onClick={() => increasePosition(index)}>v</button>
+        <button className='w-4 h-4 bg-gray-100 hover:bg-gray-100/75 rounded-full' onClick={() => decreasePosition(index)}>^</button>
       </div>
     );
   };
@@ -192,9 +192,9 @@ const ToDo = ({
             return (
               <div
                 key={item.id}
-                className="flex items-center justify-between p-3"
+                className="flex flex-row gap-4 items-center justify-between p-3 "
               >
-                <span className="flex-1">{item.task}</span>
+                <span className="flex-1 bg-gray-100 rounded-2xl p-3">{item.task}</span>
                 {buttonRendering(item, index)}
                 {/* <button></button> */}
                 <input
@@ -204,7 +204,7 @@ const ToDo = ({
                     handleToggleCompleted(item.id, e.target.checked)
                   }
                 />
-                <button onClick={() => handleDelete(item.id)}>Delete</button>
+                <button className=" px-6 py-4 bg-black text-white rounded-full" onClick={() => handleDelete(item.id)}>Delete</button>
               </div>
             );
           })}
@@ -233,16 +233,16 @@ export default ToDo;
 
 const AddTaskComponent = ({ taskInputName, taskAdd, setTaskInputName }) => {
   return (
-    <div className="flex flex-row space-x-2 py-4">
+    <div className="flex flex-row space-x-2 py-4 w-full">
       <input
-        className="bg-white p-4 rounded-2xl shadow-lg"
+        className="bg-white p-4 rounded-full border w-300"
         type="text"
         value={taskInputName}
         onChange={(e) => setTaskInputName(e.target.value)}
         placeholder="Enter Task"
       />
       <button
-        className="bg-sky-100 p-4 rounded-2xl shadow-lg"
+        className="bg-black p-4 rounded-full text-white"
         onClick={taskAdd}
       >
         Add Task
