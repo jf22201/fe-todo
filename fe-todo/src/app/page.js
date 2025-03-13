@@ -137,10 +137,10 @@ export default function Page() {
   }, [toDoLists]);
   return (
     <>
-      <div className="flex flex-col items-center h-screen bg-sky-100">
-        <div className="flex flex-row space-x-2 ">
+      <div className="flex flex-col items-center h-screen bg-white ">
+        <div className="flex flex-row space-x-2 mt-20">
           <select
-            className="space-x-4 p-4 rounded-2xl shadow-lg"
+            className="space-x-4 p-4 rounded-2xl border"
             id="dropdown"
             value={selectedListIndex}
             onChange={(e) => {
@@ -158,10 +158,10 @@ export default function Page() {
             value={newListName}
             onChange={(e) => setNewListName(e.target.value)}
             placeholder="Enter New List Name"
-            className=" p-4 rounded-2xl shadow-lg"
+            className=" p-4 rounded-2xl border"
           />
           <button
-            className="px-2 rounded-2xl shadow-lg bg-sky-600"
+            className="px-2 rounded-2xl  bg-black text-white border"
             onClick={() => {
               handleCreateNewList();
             }}
@@ -170,7 +170,7 @@ export default function Page() {
           </button>
 
           <button
-            className="px-2 rounded-2xl shadow-lg bg-sky-600"
+            className="px-2 rounded-2xl  bg-black text-white"
             onClick={handleDeleteList}
           >
             {" "}
