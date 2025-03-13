@@ -274,7 +274,7 @@ const CommentAndSummaryNotes = ({
 
   return (
     <>
-      <div className="flex flex-col space-y-4 items-center">
+      <div className="flex flex-col space-y-4 items-center py-2">
         <textarea
           type="text"
           id="input"
@@ -313,7 +313,7 @@ const MeetingTime = ({ currToDoListId, meetingTime, setMeetingTime }) => {
 
   return (
     <>
-      <div className="flex flex-col space-y-4 items-center">
+      <div className="flex flex-col space-y-4 items-center py-2">
         <textarea
           type="text"
           id="input"

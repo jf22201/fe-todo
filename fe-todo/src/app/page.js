@@ -85,21 +85,25 @@ export default function Page() {
 
   //initial state setup
   useEffect(() => {
-    getToDoLists().then(async (res) => {
-      let response = res;
-      response.data.sort((a, b) => a.id - b.id);
-      setToDoLists(response.data);
-      if (response.data.length > 0) {
-        // only set get task data if a todolist exists
-        const taskData = await getTasks(response.data[0].id);
-        setData(taskData);
-        setCurrTodoListId(response.data[0].id); //update list id state
-        setMeetingComment(response.data[0].comment);
-        setMeetingTime(response.data[0].time);
-      }
-      setLoading(false);
-      setSelectedListIndex(0); //set the selected list to the first list
-    });
+    try {
+      getToDoLists().then(async (res) => {
+        let response = res;
+        response.data.sort((a, b) => a.id - b.id);
+        setToDoLists(response.data);
+        if (response.data.length > 0) {
+          // only set get task data if a todolist exists
+          const taskData = await getTasks(response.data[0].id);
+          setData(taskData);
+          setCurrTodoListId(response.data[0].id); //update list id state
+          setMeetingComment(response.data[0].comment);
+          setMeetingTime(response.data[0].time);
+        }
+        setLoading(false);
+        setSelectedListIndex(0); //set the selected list to the first list
+      });
+    } catch {
+      console.log("error");
+    }
   }, []);
 
   //Update the current listid if the selectedListIndex changes
